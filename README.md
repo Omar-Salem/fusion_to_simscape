@@ -9,11 +9,15 @@ gravity, grounding, a floating base, and floor contact.
 
 1. In Fusion, open **Utilities → Add-ins → Scripts and Add-ins**.
 2. Add the `FusionToSimscape` folder and run the add-in.
-3. Choose **Export to Simscape Multibody** and select an output folder.
+3. Choose **Export to Simscape Multibody** and select a parent folder. The add-in
+   creates a subfolder named after the active model, containing all export files.
+   For example, selecting `/exports` for `assembled v14` writes to
+   `/exports/assembled v14/`. Characters invalid in folder names are replaced with
+   underscores. Re-exporting the same model uses its existing subfolder.
 4. In MATLAB with Simscape and Simscape Multibody installed:
 
 ```matlab
-cd('/path/to/export')
+cd('/exports/assembled v14')
 model = import_fusion_model;
 ```
 

@@ -5,12 +5,14 @@ import shutil
 import traceback
 import adsk.core
 
+from .export_paths import model_export_folder
+
 COMMAND_ID = 'FusionToSimscapeExport'
 PANEL_ID = 'SolidScriptsAddinsPanel'
 HANDLERS = []
 
 
-def export_active(output):
+def export_active(parent_folder):
     import adsk.fusion
     from .fusion_reader import FusionReader
     from .xml_writer import write
@@ -18,8 +20,8 @@ def export_active(output):
     design = adsk.fusion.Design.cast(app.activeProduct)
     if design is None:
         raise ValueError('Open a Fusion design before exporting.')
-    snapshot = FusionReader(design, output).read()
-    destination = Path(output)
+    destination = model_export_folder(parent_folder, design.parentDocument.name)
+    snapshot = FusionReader(design, destination).read()
     (destination / 'assembly.json').write_text(json.dumps(snapshot, indent=2))
     write(snapshot, destination / 'assembly.xml')
     templates = Path(__file__).resolve().parent
@@ -33,11 +35,12 @@ def export_active(output):
 def choose_and_export():
     try:
         dialog = adsk.core.Application.get().userInterface.createFolderDialog()
-        dialog.title = 'Choose Simscape Multibody export folder'
+        dialog.title = 'Choose parent folder for the model export'
         if dialog.showDialog() != adsk.core.DialogResults.DialogOK:
             return
-        export_active(dialog.folder)
-        adsk.core.Application.get().userInterface.messageBox('Export complete: ' + dialog.folder)
+        snapshot = export_active(dialog.folder)
+        destination = model_export_folder(dialog.folder, snapshot['document'])
+        adsk.core.Application.get().userInterface.messageBox('Export complete: ' + str(destination))
     except Exception:
         error = traceback.format_exc()
         adsk.core.Application.get().userInterface.messageBox(error)
