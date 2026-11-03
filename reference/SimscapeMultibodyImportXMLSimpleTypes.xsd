@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:smi="urn:mathworks:SimscapeMultibody:import" targetNamespace="urn:mathworks:SimscapeMultibody:import" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!-- Type representing transform -->
+	<xs:simpleType name="transformSimpleType">
+		<xs:restriction>
+			<xs:simpleType>
+				<xs:list itemType="xs:double"/>
+			</xs:simpleType>
+			<xs:minLength value="12"/>
+			<xs:maxLength value="12"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Type representing rotation matrix -->
+	<xs:simpleType name="rotationSimpleType">
+		<xs:restriction>
+			<xs:simpleType>
+				<xs:list itemType="xs:double"/>
+			</xs:simpleType>
+			<xs:minLength value="9"/>
+			<xs:maxLength value="9"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Vector type-->
+	<xs:simpleType name="vectorSimpleType">
+		<xs:restriction>
+			<xs:simpleType>
+				<xs:list itemType="xs:double"/>
+			</xs:simpleType>
+			<xs:minLength value="3"/>
+			<xs:maxLength value="3"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Inertia type-->
+	<xs:simpleType name="inertiaSimpleType">
+		<xs:restriction>
+			<xs:simpleType>
+				<xs:list itemType="xs:double"/>
+			</xs:simpleType>
+			<xs:minLength value="6"/>
+			<xs:maxLength value="6"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Normalized Coefficient double simple type -->
+	<xs:simpleType name="dblNormalizedCoeffSimpleType">
+		<xs:restriction base="xs:double">
+			<xs:minInclusive value="0.0"/>
+			<xs:maxInclusive value="1.0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Normalized Coefficient float simple type -->
+	<xs:simpleType name="fltNormalizedCoeffSimpleType">
+		<xs:restriction base="xs:float">
+			<xs:minInclusive value="0.0"/>
+			<xs:maxInclusive value="1.0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- XSD version string in the form 1.0 (Major.Minor) -->
+	<xs:simpleType name="xsdVersionSimpleType">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="\d*\.\d*"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:smi="urn:mathworks:SimscapeMultibody:import" targetNamespace="urn:mathworks:SimscapeMultibody:import" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:include schemaLocation="SimscapeMultibodyImportXMLSimpleTypes.xsd"/>
+	<xs:include schemaLocation="SimscapeMultibodyImportXMLEnumTypes.xsd"/>
+	<!-- Color rgb attribute group -->
+	<xs:attributeGroup name="rgbAttrGroup">
+		<!-- Red component of the color -->
+		<xs:attribute name="r" type="smi:fltNormalizedCoeffSimpleType" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the red component of the
+color.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Green component of the color -->
+		<xs:attribute name="g" type="smi:fltNormalizedCoeffSimpleType" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the green component of the
+color.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Blue component of the color -->
+		<xs:attribute name="b" type="smi:fltNormalizedCoeffSimpleType" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the blue component of the
+color.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Alpha component of the color -->
+		<xs:attribute name="a" type="smi:fltNormalizedCoeffSimpleType" use="optional" default="1.0">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the alpha component of the
+color. A value of 0 means the color is transparent while a value of
+1 means it is opaque.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<!-- RGB color ComplexType -->
+	<xs:complexType name="rgbColorType">
+		<xs:attributeGroup ref="smi:rgbAttrGroup"/>
+	</xs:complexType>
+	<!-- Length Units ComplexType -->
+	<xs:complexType name="lengthUnitsType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the length units.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="length" type="smi:lengthUnitTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the length unit type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Units ComplexType -->
+	<xs:complexType name="unitsType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define units.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="mass" type="smi:massUnitTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the mass unit type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="length" type="smi:lengthUnitTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the length unit type.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- VisualProperties ComplexType -->
+	<xs:complexType name="visualPropertiesType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the visual properties
+of the material.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="Ambient" type="smi:rgbColorType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the ambient color property
+of the material.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Diffuse" type="smi:rgbColorType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the diffuse color property
+of the material.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Specular" type="smi:rgbColorType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the specular color property
+of the material.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Emissive" type="smi:rgbColorType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the emissive color property
+of the material.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Shininess" type="smi:fltNormalizedCoeffSimpleType">
+				<xs:annotation>
+					<xs:documentation>This element defines the shininess property of the
+material. This factor is multiplied by 128.0 to obtain the shininess
+value.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<!-- Transform ComplexType -->
+	<xs:complexType name="transformType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a 3-D transform.
+Absence of a Rotation element should be treated as Identity Rotation
+and the absence of a Translation element should be treated as Zero
+Translation.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="Rotation" type="smi:rotationSimpleType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the 3x3 rotational component
+of a 3-D transform. This is intended only for pure rotational components.
+For example, if the part instance is rotated by 't' degrees about
+the Z axis, the resulting rotation matrix is [cos(t) -sin(t) 0; sin(t)
+cos(t) 0; 0 0 1]. If P [x y z] is an arbitrary point on the rotated
+part instance, then P' = [R] * P is the resulting position of the
+point after rotation. Note that the resulting point is obtained by
+pre-multiplying the rotation matrix with the original point.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Translation" type="smi:vectorSimpleType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the 1x3 translation component
+of a 3-D transform.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<!-- Created ComplexType -->
+	<xs:complexType name="createdType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the created
+properties.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="by" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute specifies the name of the person
+creating the document.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="on" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the creation date and time
+of the document.  The date and time attribute is in the format mm/dd/yy|hh:mm:ss.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="using" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute defines name of the plug-in/add-in
+used to create the document.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="from" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the application
+used to create the document.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Created by attribute -->
+		<!-- Created on date|time attribute -->
+		<!-- The name of the plug-in/add-in used to output this XML file -->
+		<!-- The application from which this XML file is output -->
+	</xs:complexType>
+	<!-- ModelFile ComplexType -->
+	<xs:complexType name="modelFileType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the model file.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the model file
+with extension.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="type" type="smi:modelFileTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the type of the model file.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Geometry file ComplexType -->
+	<xs:complexType name="geometryFileType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the geometry
+file.</xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the geometry
+file with extension.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="type" type="smi:geometryFileTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the type of the geometry
+file.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+</xs:schema>

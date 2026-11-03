@@ -1,0 +1,137 @@
+"""Read assembly geometry and connections without changing the Fusion design."""
+import hashlib
+from pathlib import Path
+import struct
+
+import adsk.core
+import adsk.fusion
+
+from .transforms import identity, metres, principal_inertia, triangle_normal
+
+JOINT_TYPES = {0: 'Weld', 1: 'Revolute'}
+
+
+def uid(text):
+    return 'b_' + hashlib.sha256(text.encode()).hexdigest()[:16]
+
+
+def write_mesh(body, destination):
+    calculator = body.meshManager.createMeshCalculator()
+    calculator.setQuality(adsk.fusion.TriangleMeshQualityOptions.HighQualityTriangleMesh)
+    mesh = calculator.calculate()
+    if not mesh or not mesh.triangleCount:
+        raise ValueError('No mesh triangles for ' + body.name)
+    nodes = mesh.nodeCoordinatesAsDouble
+    indices = mesh.nodeIndices
+    with Path(destination).open('wb') as stream:
+        stream.write(b'FusionToSimscape; coordinates in metres'.ljust(80, b' '))
+        stream.write(struct.pack('<I', mesh.triangleCount))
+        for offset in range(0, len(indices), 3):
+            vertices = [[nodes[3*i+k]*0.01 for k in range(3)] for i in indices[offset:offset+3]]
+            values = triangle_normal(vertices) + [v for vertex in vertices for v in vertex]
+            stream.write(struct.pack('<12fH', *values, 0))
+    return mesh.triangleCount
+
+
+class FusionReader:
+    def __init__(self, design, output):
+        self.design = design
+        self.root = design.rootComponent
+        self.output = Path(output)
+        self.bodies = []
+        self.joints = []
+        self.occurrence_bodies = {}
+        self.diagnostics = []
+        self.occurrences = {}
+
+    def read(self):
+        self.output.mkdir(parents=True, exist_ok=True)
+        (self.output / 'geometry').mkdir(exist_ok=True)
+        self._visit(self.root, '', identity(), True)
+        for path, occurrence in self.occurrences.items():
+            self._connections(occurrence.component, path, occurrence)
+        self._connections(self.root, '', None)
+        return dict(schemaVersion=1, document=self.design.parentDocument.name, bodies=self.bodies,
+                    joints=self.joints, diagnostics=self.diagnostics)
+
+    def _visit(self, component, path, world, grounded):
+        if component.meshBodies.count:
+            raise ValueError('Mesh bodies require explicit mass properties and are not supported: ' + path)
+        owner_bodies = []
+        for body in component.bRepBodies:
+            if not body.isSolid or not body.isVisible:
+                continue
+            key = uid(path + '/' + body.name)
+            geometry = 'geometry/' + key + '.stl'
+            props = body.getPhysicalProperties(adsk.fusion.CalculationAccuracy.HighCalculationAccuracy)
+            ok_moments, *moments = props.getPrincipalMomentsOfInertia()
+            ok_axes, *axes = props.getPrincipalAxes()
+            if not ok_moments or not ok_axes or props.mass <= 0:
+                raise ValueError('Invalid mass properties: ' + path + '/' + body.name)
+            count = write_mesh(body, self.output / geometry)
+            color = component.componentColor
+            self.bodies.append(dict(uid=key, name=(path or component.name) + '/' + body.name,
+                                    occurrence=path, transform=world, grounded=grounded,
+                                    mass=props.mass, center_of_mass=[v*0.01 for v in props.centerOfMass.asArray()],
+                                    inertia=principal_inertia(moments, [v.asArray() for v in axes]),
+                                    geometry=geometry, triangles=count,
+                                    color=[color.red/255, color.green/255, color.blue/255]))
+            owner_bodies.append(key)
+        self.occurrence_bodies[path] = owner_bodies
+        for other in owner_bodies[1:]:
+            self._add_joint(path + '/BodyWeld', 'Weld', owner_bodies[0], other, world)
+        # Traverse the real occurrence tree. allComponents also contains reference-only entities.
+        children = self.root.occurrences if not path else self.occurrences[path].childOccurrences
+        for occurrence in children:
+            if not occurrence.isVisible:
+                continue
+            child_path = occurrence.fullPathName
+            self.occurrences[child_path] = occurrence
+            child_world = metres(occurrence.transform2.asArray())
+            child_grounded = occurrence.isGrounded or (grounded and occurrence.isGroundToParent)
+            self._visit(occurrence.component, child_path, child_world, child_grounded)
+
+    def _resolve(self, owner, endpoint):
+        if endpoint is None:
+            return None
+        relative = endpoint.fullPathName
+        candidate = owner + '+' + relative if owner else relative
+        if candidate in self.occurrence_bodies:
+            keys = self.occurrence_bodies[candidate]
+            return keys[0] if keys else None
+        # Some native joint endpoints include their owning occurrence in the path.
+        matches = [keys[0] for path, keys in self.occurrence_bodies.items()
+                   if keys and (not owner or path.startswith(owner + '+')) and path.endswith('+' + relative)]
+        return matches[0] if len(matches) == 1 else None
+
+    def _connections(self, component, owner, context):
+        for collection in (component.joints, component.asBuiltJoints):
+            for native in collection:
+                label = (owner + '/' if owner else '') + native.name
+                try:
+                    if native.isSuppressed:
+                        continue
+                    base = self._resolve(owner, native.occurrenceTwo)
+                    follower = self._resolve(owner, native.occurrenceOne)
+                    if not base or not follower:
+                        self.diagnostics.append(dict(name=label, status='excluded',
+                                                     reason='Endpoint has no visible solid body (reference-only, hidden, or empty).'))
+                        continue
+                    joint = native.createForAssemblyContext(context) if context else native
+                    kind = JOINT_TYPES.get(joint.jointMotion.jointType)
+                    if kind is None:
+                        raise ValueError('Unsupported joint type: ' + label)
+                    geometry = joint.geometryTwoTransform if isinstance(joint, adsk.fusion.Joint) else joint.transform
+                    if kind == 'Revolute':
+                        if joint.jointMotion.rotationAxis != adsk.fusion.JointDirections.ZAxisJointDirection:
+                            raise ValueError('Revolute axis differs from joint-frame Z: ' + label)
+                    # Proxy frames include the solved flexible-subassembly placement.
+                    frame = metres(geometry.asArray())
+                    self._add_joint(label, kind, base, follower, frame)
+                except RuntimeError as error:
+                    raise ValueError('Cannot read joint ' + label + ': ' + str(error)) from error
+        if component.rigidGroups.count:
+            raise ValueError('Rigid groups need explicit export support: ' + owner)
+
+    def _add_joint(self, name, kind, base, follower, frame):
+        self.joints.append(dict(name=name, type=kind, base=base, follower=follower, frame=frame))

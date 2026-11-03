@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:smi="urn:mathworks:SimscapeMultibody:import" targetNamespace="urn:mathworks:SimscapeMultibody:import" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<!-- Coordinate frame type enumerations -->
+	<xs:simpleType name="frameTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="PARENT"/>
+			<xs:enumeration value="Parent"/>
+			<xs:enumeration value="parent"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Length unit type enumeration -->
+	<xs:simpleType name="lengthUnitTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="kilometer"/>
+			<xs:enumeration value="km"/>
+			<xs:enumeration value="meter"/>
+			<xs:enumeration value="m"/>
+			<xs:enumeration value="centimeter"/>
+			<xs:enumeration value="cm"/>
+			<xs:enumeration value="millimeter"/>
+			<xs:enumeration value="mm"/>
+			<xs:enumeration value="micrometer"/>
+			<xs:enumeration value="um"/>
+			<xs:enumeration value="inch"/>
+			<xs:enumeration value="in"/>
+			<xs:enumeration value="foot"/>
+			<xs:enumeration value="ft"/>
+			<xs:enumeration value="yard"/>
+			<xs:enumeration value="yd"/>
+			<xs:enumeration value="mile"/>
+			<xs:enumeration value="mi"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Mass unit type enumeration -->
+	<xs:simpleType name="massUnitTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="kilogram"/>
+			<xs:enumeration value="kg"/>
+			<xs:enumeration value="gram"/>
+			<xs:enumeration value="gm"/>
+			<xs:enumeration value="lbmass"/>
+			<xs:enumeration value="lbm"/>
+			<xs:enumeration value="slug"/>
+			<xs:enumeration value="ounce"/>
+			<xs:enumeration value="oz"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Entity type enumeration -->
+	<xs:simpleType name="entityTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Part"/>
+			<xs:enumeration value="Assembly"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Geometry type enumerations -->
+	<xs:simpleType name="geometryTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="plane"/>
+			<xs:enumeration value="cylinder"/>
+			<xs:enumeration value="cone"/>
+			<xs:enumeration value="line"/>
+			<xs:enumeration value="circle"/>
+			<xs:enumeration value="circulararc"/>
+			<xs:enumeration value="ellipse"/>
+			<xs:enumeration value="ellipticalarc"/>
+			<xs:enumeration value="point"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Model file type enumeration -->
+	<xs:simpleType name="modelFileTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="ProEngineer Part"/>
+			<xs:enumeration value="ProEngineer Assembly"/>
+			<xs:enumeration value="SolidWorks Assembly"/>
+			<xs:enumeration value="SolidWorks Part"/>
+			<xs:enumeration value="Inventor Assembly"/>
+			<xs:enumeration value="Inventor Part"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Geometry file type enumeration -->
+	<xs:simpleType name="geometryFileTypeEnum">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="STL"/>
+			<xs:enumeration value="stl"/>
+			<xs:enumeration value="STEP"/>
+			<xs:enumeration value="step"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

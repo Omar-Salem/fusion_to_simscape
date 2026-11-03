@@ -1,0 +1,30 @@
+# Generated CAD exports and simulation results (kept locally).
+/exports/
+
+# Python caches and local environments.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# MATLAB / Simulink generated files.
+slprj/
+sccprj/
+codegen/
+*.slxc
+*.slx.autosave
+*.mdl.autosave
+*.m.asv
+*.mex*
+
+# Local OS and editor files.
+.DS_Store
+._*
+*.swp
+*.swo
+*~

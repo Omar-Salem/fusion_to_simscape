@@ -1,0 +1,1052 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:smi="urn:mathworks:SimscapeMultibody:import" targetNamespace="urn:mathworks:SimscapeMultibody:import" elementFormDefault="qualified" attributeFormDefault="unqualified" version="2.0">
+	<xs:include schemaLocation="SimscapeMultibodyImportXMLBasic.xsd"/>
+	<!-- Attributes associated with an entity -->
+	<xs:attributeGroup name="entityAttrGroup">
+		<xs:annotation>
+			<xs:documentation>Attributes associated with an entity type.</xs:documentation>
+		</xs:annotation>
+		<!-- Name of the part or assembly -->
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the entity.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Unique identifier of the part or assembly -->
+		<xs:attribute name="uid" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the unique identifier of
+the entity. This identifier should be persistent across sessions and
+uniquely identify the entity at any given time.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Version associated with the part or assembly -->
+		<xs:attribute name="version" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the optional version identifier
+associated with the entity. The version will change whenever the entity
+is modified and saved to the file or database.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:attributeGroup>
+	<!-- Entity ComplexType -->
+	<xs:complexType name="entityType" abstract="true">
+		<xs:annotation>
+			<xs:documentation>Base class schema for entity types.</xs:documentation>
+		</xs:annotation>
+		<xs:attributeGroup ref="smi:entityAttrGroup"/>
+	</xs:complexType>
+	<xs:complexType name="instancePathType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define an instance
+path.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Uid" type="xs:string" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines the unique identifier associated
+with the instance.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Constraint Geometry ComplexType -->
+	<xs:complexType name="constraintGeometryType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define constraint geometry
+associated with a constraint.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="InstancePath" type="smi:instancePathType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element defines a unique path to the instance
+from the owner of the constraint. The path should be constructed using
+the unique identifiers of the instances. Absence of this element indicates
+that the geometry is owned by the assembly owning the constraint.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<!-- Position associated with the geometry -->
+			<xs:element name="Position" type="smi:vectorSimpleType">
+				<xs:annotation>
+					<xs:documentation>This element defines the position associated with
+the geometry.  The position can be queried from the geometry. The
+position should be output with respect to the part coordinate system
+associated with the instance. The following table describes the position
+associated with the geometry.       
+      Geometry       Associated Point
+      -------------------------------       
+       Line            Start point       
+       Circle          Center point of circle       
+       Circular Arc    Center point of arc       
+       Ellipse         Center point of ellipse
+       Elliptical Arc  Center point of elliptical arc       
+       Plane           Origin of the plane       
+       Cylinder        Origin of the cylinder
+       Cone            Origin of the cone       
+       Point           Location of the point           
+                                      </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<!-- Axis associated with the geometry -->
+			<xs:element name="Axis" type="smi:vectorSimpleType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element defines the axis associated with the
+geometry.  The axis can be queried from the geometry. The following
+table describes the axis associated with the geometry.       
+      Geometry Associated Axis       
+      -------------------------------     
+      Line            Vector from start to end point
+      Circle          Plane normal to the circle
+      Circular Arc    Plane normal to the circular arc
+      Ellipse         Plane normal to the ellipse
+      Elliptical Arc  Plane normal to the elliptical arc
+      Plane           Normal to the plane
+      Cylinder        Axis of the cylinder
+      Cone            Axis of the cone
+          </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="geomType" type="smi:geometryTypeEnum" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the geometry type associated
+with the constraint entity.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<!-- Geometry type associated with the constraint entity -->
+	</xs:complexType>
+	<!-- Joint Frame ComplexType -->
+	<xs:complexType name="jointFrameType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a joint frame associated with a joint.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="InstancePath" type="smi:instancePathType" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>This element defines a unique path to the instance
+            from the owner of the joint. The path should be constructed using
+            the unique identifiers of the instances. Absence of this element indicates
+            that the frame is owned by the assembly owning the joint.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Transform" type="smi:transformType" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>This element specifies the transform associated
+            with the instance.  The transform orients the referring part or assembly
+            in the parent coordinate system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<!--Joint ComplexType -->
+	<xs:complexType name="jointType">
+		<xs:annotation>
+			<xs:documentation> This complex type is used as the base type for all joints.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="BaseFrame" type="smi:jointFrameType" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>This element specifies the base frame of the joint.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="FollowerFrame" type="smi:jointFrameType" minOccurs="1" maxOccurs="1">
+				<xs:annotation>
+					<xs:documentation>This element specifies the follower frame for the joint.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="name" type="xs:string" use="optional">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the joint and corresponding block. A numerical 
+suffix is appended to the name if necessary to prevent duplicates in the component hierarchy. An autogenerated name 
+is used if the name is not specified.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Revolute Joint ComplexType -->
+	<xs:complexType name = "revoluteJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a revolute joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Prismatic Joint ComplexType -->
+	<xs:complexType name = "prismaticJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a prismatic joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Spherical Joint ComplexType -->
+	<xs:complexType name = "sphericalJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a spherical joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Cylindrical Joint ComplexType -->
+	<xs:complexType name = "cylindricalJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a cylindrical joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Cartesian Joint ComplexType -->
+	<xs:complexType name = "cartesianJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a cartesian joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Planar Joint ComplexType -->
+	<xs:complexType name = "planarJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a planar joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Rectangular Joint ComplexType -->
+	<xs:complexType name = "rectangularJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a rectangular joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Universal Joint ComplexType -->
+	<xs:complexType name = "universalJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a universal joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- SixDof Joint ComplexType -->
+	<xs:complexType name = "sixDofJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a 6-DOF joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Bearing Joint ComplexType -->
+	<xs:complexType name = "bearingJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a bearing joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Bushing Joint ComplexType -->
+	<xs:complexType name = "bushingJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a bushing joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- ConstantVelocity Joint ComplexType -->
+	<xs:complexType name = "constantVelocityJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a constant velocity joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Gimbal Joint ComplexType -->
+	<xs:complexType name = "gimbalJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a gimbal joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- LeadScrew Joint ComplexType -->
+	<xs:complexType name = "leadScrewJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a lead screw joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- PinSlot Joint ComplexType -->
+	<xs:complexType name = "pinSlotJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a pin slot joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Telescoping Joint ComplexType -->
+	<xs:complexType name = "telescopingJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a telescoping joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Weld Joint ComplexType -->
+	<xs:complexType name = "weldJointType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a weld joint between two instances.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base = "smi:jointType">
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Constraint ComplexType -->
+	<xs:complexType name="constraintType">
+		<xs:annotation>
+			<xs:documentation> This complex type is used as the base type for all constraints. </xs:documentation>
+		</xs:annotation>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the constraint.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Coincident Constraint ComplexType -->
+	<xs:complexType name="coincidentConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a coincident
+constraint between two instances. The coincident constraint makes
+two geometries coincident with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the coincident constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Concentric Constraint ComplexType -->
+	<xs:complexType name="concentricConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a concentric
+constraint between two instances. The concentric constraint makes
+two concentric geometries concentric with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the concentric constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Perpendicular Constraint ComplexType -->
+	<xs:complexType name="perpendicularConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a perpendicular
+constraint between two instances. The perpendicular constraint makes
+two geometries perpendicular with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the perpendicular constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Parallel Constraint ComplexType -->
+	<xs:complexType name="parallelConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a parallel
+constraint between two instances. The parallel constraint makes two
+geometries parallel with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the parallel constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Distance Constraint ComplexType -->
+	<xs:complexType name="distanceConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a distance
+constraint between two instances. The distance constraint places two
+geometries at the specified distance with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the distance constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Angle Constraint ComplexType -->
+	<xs:complexType name="angleConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define an angle constraint
+between two instances. The angle constraint places two geometries
+at a specified angle with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="ConstraintGeometry" type="smi:constraintGeometryType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element specifies the two constraint entities
+associated with the angle constraint.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Rigid Constraint ComplexType -->
+	<xs:complexType name="rigidConstraintType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a rigid constraint
+between two instances. The rigid constraint makes two geometries fully
+constrained with respect to each other.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:constraintType">
+				<xs:sequence>
+					<xs:element name="InstancePath" type="smi:instancePathType" minOccurs="2" maxOccurs="2">
+						<xs:annotation>
+							<xs:documentation>This element defines a unique path to the instance
+from the owner of the constraint. The path should be constructed using
+the unique identifiers of the instances. There are no degrees of freedom
+between the constrained instances.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!--Joints ComplexType -->
+	<xs:complexType name="jointsType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define all the joints present in the context assembly.</xs:documentation>
+		</xs:annotation>
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="Revolute" type="smi:revoluteJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a revolute joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Prismatic" type="smi:prismaticJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a prismatic joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Spherical" type="smi:sphericalJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a spherical joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Cylindrical" type="smi:cylindricalJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a cylindrical joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Cartesian" type="smi:cartesianJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a cartesian joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Planar" type="smi:planarJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a planar joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Rectangular" type="smi:rectangularJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a rectangular joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Universal" type="smi:universalJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a universal joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="SixDof" type="smi:sixDofJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a 6-DOF joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Bearing" type="smi:bearingJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a bearing joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Bushing" type="smi:bushingJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a bushing joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ConstantVelocity" type="smi:constantVelocityJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a constant velocity joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Gimbal" type="smi:gimbalJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a gimbal joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="LeadScrew" type="smi:leadScrewJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a lead screw joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="PinSlot" type="smi:pinSlotJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a pin slot joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Telescoping" type="smi:telescopingJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a telescoping joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Weld" type="smi:weldJointType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a weld joint between two instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+	<!-- Constraints ComplexType -->
+	<xs:complexType name="constraintsType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define all the constraints
+present in the context assembly.</xs:documentation>
+		</xs:annotation>
+		<xs:choice minOccurs="0" maxOccurs="unbounded">
+			<xs:element name="Coincident" type="smi:coincidentConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a coincident constraint between
+two instances. Coincident constraint makes two geometries coincident
+with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Concentric" type="smi:concentricConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a concentric constraint between
+two instances. The concentric constraint makes two geometries concentric
+with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Perpendicular" type="smi:perpendicularConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a perpendicular constraint
+between two instances. The perpendicular constraint makes two geometries
+perpendicular with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Parallel" type="smi:parallelConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a perpendicular constraint
+between two instances. The perpendicular constraint makes two geometries
+perpendicular with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Distance" type="smi:distanceConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a distance constraint between
+two instances. The distance constraint places two geometries at a
+specified distance with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Angle" type="smi:angleConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a angle constraint between
+two instances. The angle constraint places two geometries at a specified
+angle with respect to each other.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Rigid" type="smi:rigidConstraintType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a rigid constraint between
+two instances. The rigid constraint makes two geometries fully constrained
+with respect to each other. There are no degrees of freedom between
+the constrained instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:choice>
+	</xs:complexType>
+	<!-- Frame ComplexType -->
+	<xs:complexType name="frameType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a coordinate
+system associated with a part or assembly.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Transform" type="smi:transformType">
+				<xs:annotation>
+					<xs:documentation>This element specifies the rotation and origin components
+associated with the coordinate system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the coordinate
+system.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="uid" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the unique identifier of
+the coordinate system in its parent context. This attribute can simply
+be the name of the frame.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- Frames ComplexType -->
+	<xs:complexType name="framesType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a list of frames.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Frame" type="smi:frameType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines a frame.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Instance ComplexType -->
+	<xs:complexType name="instanceType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define an instance
+of part or assembly oriented and positioned in the parent assembly.
+An Instance refers to an assembly or part using a unique entity identifier.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Transform" type="smi:transformType">
+				<xs:annotation>
+					<xs:documentation>This element specifies the transform associated
+with the instance.  The transform orients the referring part or assembly
+in the parent coordinate system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Instance" type="smi:instanceType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element recursively specifies the child instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="VisualProperties" type="smi:visualPropertiesType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element specifies the visual properties associated
+with the instance. This overrides the visual properties of the part
+associated with the instance.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the name of the instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="uid" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the unique identifier of
+the instance in its parent context. This attribute can simply be the
+name of the instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="entityUid" type="xs:string" use="required">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the unique identifier of
+the part or assembly associated with the instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="transientUid" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute represents the unique identifier
+of the transient part created to override the part geometry associated
+by the entityUid.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="visible" type="xs:boolean" default="true">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the visibility state of the
+instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="version" type="xs:string">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the optional version identifier
+associated with the instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="grounded" type="xs:boolean" default="false">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the grounded state of the
+instance.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="rigid" type="xs:boolean" default="false">
+			<xs:annotation>
+				<xs:documentation>This attribute defines the rigidity of the assembly
+instance. As assembly instance can be flexible or rigid. This attribute
+should be associated only with the instance whose entity type is Assembly.</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+	<!-- InstanceTree ComplexType -->
+	<xs:complexType name="instanceTreeType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the instance
+tree. The instance tree is made up of instances defining the hierarchy
+of the assembly. The instance tree is a snapshot of assembly structure
+and orientation of the instances at the time of export. The transform
+associated with the instance should be with respect to its immediate
+parent instance.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Instance" type="smi:instanceType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines the child instances.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Mass properties of the part -->
+	<xs:complexType name="massPropertiesType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the mass properties
+associated with the part or assembly.</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="Mass" type="xs:double">
+				<xs:annotation>
+					<xs:documentation>This element defines the mass of the part or assembly.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="CenterOfMass" type="smi:vectorSimpleType">
+				<xs:annotation>
+					<xs:documentation>This element defines the center of mass of the part.
+The center of mass is defined with respect to the part coordinate
+system.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Inertia" type="smi:inertiaSimpleType">
+				<xs:annotation>
+					<xs:documentation>This element defines the inertia of the part or
+assembly. The inertia components are listed in the order [Ixx Iyy
+Izz Iyz Izx Ixy]. The inertia components are defined with respect
+to the center-of-mass frame.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+	<xs:element name="MassProperties" type="smi:massPropertiesType">
+		<xs:annotation>
+			<xs:documentation>This element can be used to define the mass properties
+of a part.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<!-- Assembly ComplexType -->
+	<xs:complexType name="assemblyType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define an assembly.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:entityType">
+				<xs:all>
+					<xs:element name="ModelUnits" type="smi:unitsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the model units associated
+with the entity. This overrides the model units specified in the document
+element.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="AssemblyFile" type="smi:modelFileType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the model file associated with
+the entity.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Constraints" type="smi:constraintsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the constraints associated
+with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Frames" type="smi:framesType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the coordinate systems associated
+with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Joints" type="smi:jointsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the joints associated
+                with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- RootAssembly ComplexType -->
+	<xs:complexType name="rootAssemblyType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a root assembly
+being imported into the Simscape Multibody application.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:entityType">
+				<xs:all>
+					<xs:element name="ModelUnits" type="smi:unitsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the model units associated
+with the entity. This overrides the model units specified in the document
+element.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="AssemblyFile" type="smi:modelFileType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the model file associated with
+the entity.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Constraints" type="smi:constraintsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the constraints associated
+with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Frames" type="smi:framesType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the coordinate systems associated
+with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="InstanceTree" type="smi:instanceTreeType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the instance tree associated
+with the context assembly model. The tree represents the full assembly
+hierarchy in the CAD system. This is a snapshot of the active assembly
+hierarchy at the time of export.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Joints" type="smi:jointsType" minOccurs="0" maxOccurs="1">
+						<xs:annotation>
+							<xs:documentation>This element defines the joints associated
+                with the assembly.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:all>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Part ComplexType -->
+	<xs:complexType name="partType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define a part.</xs:documentation>
+		</xs:annotation>
+		<xs:complexContent>
+			<xs:extension base="smi:entityType">
+				<xs:all>
+					<xs:element name="ModelUnits" type="smi:unitsType" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>This element defines the model units associated
+with the entity. This overrides the model units specified in the document
+element.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="PartFile" type="smi:modelFileType" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>This element defines the model file associated with
+the entity.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element ref="smi:MassProperties">
+						<xs:annotation>
+							<xs:documentation>This element defines the mass properties associated
+with the part.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="GeometryFile" type="smi:geometryFileType" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>This element defines the geometry file associated
+with the part.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="VisualProperties" type="smi:visualPropertiesType" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>This element specifies the visual properties associated
+with the part.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="Frames" type="smi:framesType" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>This element defines the coordinate systems associated
+with the part.</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:all>
+				<xs:attribute name="transient" type="xs:boolean" default="false">
+					<xs:annotation>
+						<xs:documentation>This attribute defines the transient nature of the
+part. The transient part gets created on the fly during export. For
+an occurrence with assembly feature, a transient part can be created
+on the fly to generate the geometry file and can be deleted at the
+end of the export process.</xs:documentation>
+					</xs:annotation>
+				</xs:attribute>
+			</xs:extension>
+			<!-- If the entity is a transient entity -->
+		</xs:complexContent>
+	</xs:complexType>
+	<!-- Assemblies ComplexType -->
+	<xs:complexType name="assembliesType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the list of
+assemblies.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Assembly" type="smi:assemblyType" minOccurs="0" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines the assembly.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- Parts ComplexType -->
+	<xs:complexType name="partsType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the list of
+parts.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Part" type="smi:partType" maxOccurs="unbounded">
+				<xs:annotation>
+					<xs:documentation>This element defines the part.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+	</xs:complexType>
+	<!-- SimscapeMultibodyXML ComplexType -->
+	<xs:complexType name="simscapeMultibodyImportXMLType">
+		<xs:annotation>
+			<xs:documentation>This complex type is used to define the SimscapeMultibodyXML
+document.</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="Created" type="smi:createdType">
+				<xs:annotation>
+					<xs:documentation>This element defines the document creation properties.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="ModelUnits" type="smi:unitsType">
+				<xs:annotation>
+					<xs:documentation>This element defines the model units used in the
+assemblies and parts. This can be overridden at the assembly and part
+element levels.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="DataUnits" type="smi:unitsType" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>This element defines the data units used by the
+CAD open APIs. If DataUnits is not present, it is assumed that the
+XML data is represented using ModelUnits.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="RootAssembly" type="smi:rootAssemblyType">
+				<xs:annotation>
+					<xs:documentation>This element defines the context assembly model
+that needs to be used to create the Simscape Multibody model.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Assemblies" type="smi:assembliesType">
+				<xs:annotation>
+					<xs:documentation>This element defines the list of assemblies.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="Parts" type="smi:partsType">
+				<xs:annotation>
+					<xs:documentation>This element defines the list of parts.</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="version" type="smi:xsdVersionSimpleType" default="2.0"/>
+		<?Pub Caret -1?>
+	</xs:complexType>
+	<!-- SimscapeMultibodyImportXML File element -->
+	<xs:element name="SimscapeMultibodyImportXML" type="smi:simscapeMultibodyImportXMLType">
+		<xs:annotation>
+			<xs:documentation>This element defines the root SimscapeMultibodyImportXML
+document. This XML schema defines the CAD assembly hierarchy, orientation
+and constraints. Any XML document conforming to this schema can be
+imported into the Simscape Multibody application for performing state-of-the-art
+motion analysis.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+</xs:schema>
