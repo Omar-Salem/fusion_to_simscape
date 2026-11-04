@@ -28,7 +28,7 @@ name unless `ModelName` is supplied. Existing generated models/data files move
 into `history/` before replacement; loaded models must be closed first.
 
 Each import writes `<model>_manifest.json`: body UIDs map to solid blocks and
-subsystems; revolute joints map to imported blocks using the source identifiers
+subsystems; revolute and prismatic joints map to imported blocks using the source identifiers
 in MATLAB's import data; CAD world attachments map to their rigid transforms.
 Paths in the manifest are relative to the model. Welds are recorded as rigid
 connections, without requiring a separate joint block.
@@ -87,15 +87,28 @@ Simscape logging uses `fusionLog` by default; `LogName` selects another output n
   and component colours are exported. Multiple bodies in a component are welded.
 - Joint frames use solved Fusion assembly-context placements, including flexible
   subassemblies. Hierarchy is flattened; full occurrence paths remain in metadata.
-- Rigid and revolute joints are supported. Other joint types, rigid groups, mesh
-  bodies, and revolute axes differing from joint-frame Z fail explicitly.
+- Rigid, revolute, and slider joints are supported. Sliders become Simscape
+  prismatic joints. Revolute and slider X/Y/Z directions are mapped onto the
+  exported joint frame's Z axis; custom direction vectors are transported from
+  the native frame into the solved assembly frame. Origins and captured poses
+  are preserved, including positive motion direction.
+- Rigid groups are exported as a minimal weld forest. Overlapping groups,
+  multi-body component welds, and existing rigid joints are combined without
+  adding redundant rigid loops. Suppressed groups are skipped. Members with no
+  visible solid body are excluded with diagnostics; descendants are included
+  only when Fusion reports them as group members.
+- Relative motion outside a rigid group remains available. A revolute or slider
+  joint whose endpoints are rigidly connected is reported as `locked` and omitted
+  from the moving-joint list. Redundant explicit welds are reported as `redundant`.
+  Group names and exported body membership are retained in `rigid_groups` in
+  `assembly.json`.
+- Other joint types and mesh bodies still fail explicitly.
 - The captured CAD pose becomes the joint reference configuration. Joint limits,
   motion relationships, motors, controllers, and other environments are not
   translated automatically.
 - Hidden, empty, and reference-only joint endpoints are excluded with diagnostics.
 - Snapshot schema version 1 is emitted. MATLAB also accepts the original
   unversioned snapshots from this repository; unknown versions are rejected.
-- These changes generalize setup, not the list of supported Fusion joint types.
 
 ## Balancing robot example
 
@@ -113,20 +126,36 @@ Python checks run without Fusion or MATLAB:
 python3 -m unittest discover -s tests -v
 ```
 
-Create unrelated cube and hinge exports, then exercise the MATLAB setup:
+Create unrelated cube, hinge, joint-motion, and rigid-group exports, then exercise MATLAB:
 
 ```sh
 PYTHONPATH=. python3 tests/create_test_exports.py exports/test_cases
 xmllint --noout --schema reference/SimscapeMultibodyImportXML.xsd exports/test_cases/single_body/assembly.xml
 xmllint --noout --schema reference/SimscapeMultibodyImportXML.xsd exports/test_cases/hinged_pair/assembly.xml
+xmllint --noout --schema reference/SimscapeMultibodyImportXML.xsd exports/test_cases/joint_motion_cases/assembly.xml
+xmllint --noout --schema reference/SimscapeMultibodyImportXML.xsd exports/test_cases/rigid_groups/assembly.xml
 ```
 
 ```matlab
 addpath('tests/matlab')
 validate_general_setup(string(pwd))
+validate_joint_motion(string(pwd))
+validate_rigid_groups(string(pwd))
 ```
 
-The MATLAB checks cover a single floating body placed on the floor, a two-body
+The joint-motion check imports eight joints (X, Y, Z, and custom directions for
+both revolute and slider motion). It checks imported world axes and captured
+poses, then exercises positive angular and linear velocities to verify sign and
+SI-unit scale. Python tests also cover negative axes, solved proxy transport,
+and both standard and as-built joint API adapters. Synthetic tests complement
+the captured Fusion regression data; they do not replace live Fusion testing.
+
+The rigid-group check combines overlapping groups and duplicate welds, checks
+relative frames and total mass after import, and exercises an external hinge
+and slider to verify that both remain free. Python checks cover suppression,
+excluded members, repeated instances, and joints intentionally locked by a group.
+
+The setup checks cover a single floating body placed on the floor, a two-body
 hinge grounded at a different body than in the CAD export, arbitrary component
 names, gravity, block mapping, simulation, and invalid body selection.
 
@@ -140,6 +169,9 @@ folder picker and `tools/inspect_fusion.py` writes a diagnostic inventory.
 - [MathWorks CAD translation](https://www.mathworks.com/help/sm/ug/cad-translation.html)
 - [Official XML schemas](https://www.mathworks.com/products/simscape-multibody/download_smxmlschema.html)
 - [smimport](https://www.mathworks.com/help/sm/ref/smimport.html)
+- [Fusion joint directions](https://help.autodesk.com/cloudhelp/ENU/Fusion-360-API/files/fusion_JointDirections.htm)
+- [Fusion rigid groups](https://help.autodesk.com/cloudhelp/ENU/Fusion-360-API/files/fusion_RigidGroup.htm)
+- [Fusion slider joint motion](https://help.autodesk.com/cloudhelp/ENU/Fusion-360-API/files/fusion_SliderJointMotion.htm)
 
 Files under `reference/` are unmodified MathWorks reference downloads for schema
 validation; they are not part of the add-in runtime.

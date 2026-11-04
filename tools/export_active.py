@@ -8,7 +8,7 @@ REPOSITORY = Path(__file__).resolve().parents[1]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 try:
-    for name in ('transforms', 'xml_writer', 'fusion_reader', 'export_paths', 'FusionToSimscape'):
+    for name in ('transforms', 'joint_frames', 'rigid_groups', 'xml_writer', 'fusion_reader', 'export_paths', 'FusionToSimscape'):
         module = importlib.import_module('FusionToSimscape.' + name)
         importlib.reload(module)
     module.choose_and_export()

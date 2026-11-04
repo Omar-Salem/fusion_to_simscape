@@ -44,19 +44,23 @@ for index = 1:numel(transforms)
             'TransformBlock', relative_path(string(transforms{index}), model)); %#ok<AGROW>
     end
 end
-jointBlocks = find_system(model, 'SearchDepth', 1, ...
-    'ReferenceBlock', 'sm_lib/Joints/Revolute Joint');
+jointBlocks = [find_system(model, 'SearchDepth', 1, ...
+    'ReferenceBlock', 'sm_lib/Joints/Revolute Joint'); ...
+    find_system(model, 'SearchDepth', 1, ...
+    'ReferenceBlock', 'sm_lib/Joints/Prismatic Joint')];
 joints = repmat(struct('Name', "", 'BaseUid', "", 'FollowerUid', "", ...
     'Type', "", 'Block', ""), numel(snapshot.joints), 1);
 for index = 1:numel(snapshot.joints)
     joint = snapshot.joints(index);
     block = "";
-    if strcmp(joint.type, 'Revolute')
+    if any(strcmp(joint.type, {'Revolute', 'Prismatic'}))
         expected = "[" + string(joint.base) + ":-:" + string(joint.follower) + "]";
         for candidate = 1:numel(jointBlocks)
             expression = get_param(jointBlocks{candidate}, 'PositionTargetValue');
-            token = regexp(expression, 'RevoluteJoint\((\d+)\)', 'tokens', 'once');
-            if ~isempty(token) && string(smiData.RevoluteJoint(str2double(token{1})).ID) == expected
+            pattern = [joint.type 'Joint\((\d+)\)'];
+            token = regexp(expression, pattern, 'tokens', 'once');
+            dataType = [joint.type 'Joint'];
+            if ~isempty(token) && string(smiData.(dataType)(str2double(token{1})).ID) == expected
                 assert(block == "", 'FusionToSimscape:JointMapping', ...
                     'Ambiguous imported joint mapping for %s.', joint.name);
                 block = relative_path(string(jointBlocks{candidate}), model);

@@ -6,9 +6,15 @@ import struct
 import adsk.core
 import adsk.fusion
 
+from .joint_frames import motion_frame
+from .rigid_groups import normalize_rigid_connections
 from .transforms import identity, metres, principal_inertia, triangle_normal
 
-JOINT_TYPES = {0: 'Weld', 1: 'Revolute'}
+JOINT_TYPES = {
+    adsk.fusion.JointTypes.RigidJointType: 'Weld',
+    adsk.fusion.JointTypes.RevoluteJointType: 'Revolute',
+    adsk.fusion.JointTypes.SliderJointType: 'Prismatic',
+}
 
 
 def uid(text):
@@ -43,6 +49,7 @@ class FusionReader:
         self.occurrence_bodies = {}
         self.diagnostics = []
         self.occurrences = {}
+        self.rigid_groups = []
 
     def read(self):
         self.output.mkdir(parents=True, exist_ok=True)
@@ -51,8 +58,10 @@ class FusionReader:
         for path, occurrence in self.occurrences.items():
             self._connections(occurrence.component, path, occurrence)
         self._connections(self.root, '', None)
+        self.joints, rigid_diagnostics = normalize_rigid_connections(self.bodies, self.joints, self.rigid_groups)
+        self.diagnostics.extend(rigid_diagnostics)
         return dict(schemaVersion=1, document=self.design.parentDocument.name, bodies=self.bodies,
-                    joints=self.joints, diagnostics=self.diagnostics)
+                    joints=self.joints, rigid_groups=self.rigid_groups, diagnostics=self.diagnostics)
 
     def _visit(self, component, path, world, grounded):
         if component.meshBodies.count:
@@ -91,18 +100,21 @@ class FusionReader:
             child_grounded = occurrence.isGrounded or (grounded and occurrence.isGroundToParent)
             self._visit(occurrence.component, child_path, child_world, child_grounded)
 
-    def _resolve(self, owner, endpoint):
+    def _occurrence_path(self, owner, endpoint):
         if endpoint is None:
             return None
         relative = endpoint.fullPathName
         candidate = owner + '+' + relative if owner else relative
         if candidate in self.occurrence_bodies:
-            keys = self.occurrence_bodies[candidate]
-            return keys[0] if keys else None
-        # Some native joint endpoints include their owning occurrence in the path.
-        matches = [keys[0] for path, keys in self.occurrence_bodies.items()
-                   if keys and (not owner or path.startswith(owner + '+')) and path.endswith('+' + relative)]
-        return matches[0] if len(matches) == 1 else None
+            return candidate
+        if relative in self.occurrence_bodies and (not owner or relative.startswith(owner + '+')):
+            return relative
+        return None
+
+    def _resolve(self, owner, endpoint):
+        path = self._occurrence_path(owner, endpoint)
+        keys = self.occurrence_bodies.get(path, [])
+        return keys[0] if keys else None
 
     def _connections(self, component, owner, context):
         for collection in (component.joints, component.asBuiltJoints):
@@ -121,17 +133,47 @@ class FusionReader:
                     kind = JOINT_TYPES.get(joint.jointMotion.jointType)
                     if kind is None:
                         raise ValueError('Unsupported joint type: ' + label)
-                    geometry = joint.geometryTwoTransform if isinstance(joint, adsk.fusion.Joint) else joint.transform
-                    if kind == 'Revolute':
-                        if joint.jointMotion.rotationAxis != adsk.fusion.JointDirections.ZAxisJointDirection:
-                            raise ValueError('Revolute axis differs from joint-frame Z: ' + label)
-                    # Proxy frames include the solved flexible-subassembly placement.
-                    frame = metres(geometry.asArray())
+                    # Proxy geometry includes solved flexible-subassembly placement.
+                    frame = self._joint_frame(joint)
+                    if kind in ('Revolute', 'Prismatic'):
+                        motion = joint.jointMotion
+                        direction = motion.rotationAxis if kind == 'Revolute' else motion.slideDirection
+                        if direction == adsk.fusion.JointDirections.CustomJointDirection:
+                            native_motion = native.jointMotion
+                            vector = (native_motion.rotationAxisVector if kind == 'Revolute'
+                                      else native_motion.slideDirectionVector)
+                            if vector is None:
+                                raise ValueError('Missing custom joint axis: ' + label)
+                            frame = motion_frame(frame, direction, vector.asArray(), self._joint_frame(native))
+                        else:
+                            frame = motion_frame(frame, direction)
                     self._add_joint(label, kind, base, follower, frame)
                 except RuntimeError as error:
                     raise ValueError('Cannot read joint ' + label + ': ' + str(error)) from error
-        if component.rigidGroups.count:
-            raise ValueError('Rigid groups need explicit export support: ' + owner)
+        self._collect_rigid_groups(component, owner)
+
+    def _collect_rigid_groups(self, component, owner):
+        for index in range(component.rigidGroups.count):
+            group = component.rigidGroups.item(index)
+            if group.isSuppressed:
+                continue
+            label = (owner + '/' if owner else '') + group.name
+            members = []
+            for occurrence in group.occurrences:
+                path = self._occurrence_path(owner, occurrence)
+                bodies = self.occurrence_bodies.get(path, [])
+                if bodies:
+                    members.extend(bodies)
+                else:
+                    self.diagnostics.append(dict(name=label, status='excluded',
+                                                 member=occurrence.fullPathName,
+                                                 reason='Rigid-group member has no visible solid body.'))
+            self.rigid_groups.append(dict(name=label, members=sorted(set(members))))
+
+    @staticmethod
+    def _joint_frame(joint):
+        geometry = joint.geometryTwoTransform if isinstance(joint, adsk.fusion.Joint) else joint.transform
+        return metres(geometry.asArray())
 
     def _add_joint(self, name, kind, base, follower, frame):
         self.joints.append(dict(name=name, type=kind, base=base, follower=follower, frame=frame))
