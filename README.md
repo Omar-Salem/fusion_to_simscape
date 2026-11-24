@@ -5,6 +5,13 @@ Import XML v2, with STL geometry in metres and CAD mass properties in SI units.
 MATLAB imports the CAD assembly; an optional, separate setup function configures
 gravity, grounding, a floating base, and floor contact.
 
+[View the plugin on Autodesk App Store (listing preview)](https://apps.autodesk.com/FUSION/en/Detail/Index?id=2055834698447565780&appLang=en&os=Mac&mode=preview).
+The listing is currently a draft pending submission and review.
+
+![Balancing-robot assembly exported from Fusion, preserving component colours and placement](docs/images/balancing-robot-export.png)
+
+*Example exported geometry, with dimensions in metres.*
+
 ## Export and import
 
 1. In Fusion, open **Utilities → Add-ins → Scripts and Add-ins**.
