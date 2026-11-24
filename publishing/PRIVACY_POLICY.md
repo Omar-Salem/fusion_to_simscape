@@ -3,7 +3,7 @@
 Effective date: 24 November 2026
 
 Publisher: Omar Salem  
-Contact: omar.gamil.salem@gmail.com
+Contact: ars.automata.fusion@gmail.com
 
 ## Scope
 
@@ -37,4 +37,4 @@ Autodesk Fusion, the Autodesk App Store, MATLAB, Simscape, Simscape Multibody, y
 
 ## Changes and contact
 
-This policy may be updated if the add-in's information-handling practices change. The effective date identifies the policy version. For privacy questions or requests, contact Omar Salem at omar.gamil.salem@gmail.com.
+This policy may be updated if the add-in's information-handling practices change. The effective date identifies the policy version. For privacy questions or requests, contact Omar Salem at ars.automata.fusion@gmail.com.
