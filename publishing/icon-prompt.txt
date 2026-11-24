@@ -1,0 +1,3 @@
+Generated with the built-in image_gen tool.
+
+Square app-store icon for Fusion to Simscape Multibody: a solid isometric cube transitioning through a right arrow into a mechanical joint. Dark navy background, teal and orange shapes, flat vector-like style, readable at 120 pixels. No text or vendor logos.
